@@ -1,0 +1,102 @@
+plugins {
+    id 'fabric-loom' version '1.7-SNAPSHOT'
+    id 'maven-publish'
+}
+
+version = project.mod_version
+group = project.maven_group
+
+base {
+    archivesName = project.archives_base_name
+}
+
+loom {
+
+    decompilers {
+        vineflower {
+            options.put("pll", "32767")
+            options.put("ind", "    ")
+        }
+    }
+
+    def commonVmArgs = [
+            "-XX:+AllowEnhancedClassRedefinition",
+            "-XX:+IgnoreUnrecognizedVMOptions"
+    ]
+    def commonProperties = ["mixin.debug.export": "true", "mixin.hotSwap": "true"]
+
+    mixin {
+        defaultRefmapName = "dmstabs.mixins.refmap.json"
+    }
+
+    runs {
+        client {
+            properties commonProperties
+            vmArgs commonVmArgs
+            programArgs "--username", "PPekKunGz", "--uuid", "90271807003549998beab39344eed49d"
+        }
+        server {
+            properties commonProperties
+            vmArgs commonVmArgs
+        }
+    }
+
+}
+
+repositories {
+    maven { url "https://maven.shedaniel.me/" }
+    maven { url "https://maven.terraformersmc.com/releases/" }
+//	maven {
+//		name "ParchmentMC"
+//		url "https://maven.parchmentmc.org"
+//		content {
+//			includeGroup "org.parchmentmc.data"
+//		}
+//	}
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    mappings loom.layered() {
+        officialMojangMappings()
+//		parchment("org.parchmentmc.data:parchment-${parchmentmc_version}@zip")
+    }
+    modImplementation "com.terraformersmc:modmenu:7.2.2"
+    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+}
+
+processResources {
+    inputs.property "version", project.version
+
+    filesMatching("fabric.mod.json") {
+        expand "version": project.version
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    it.options.release = 17
+}
+
+java {
+    withSourcesJar()
+
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+jar {
+    from("LICENSE") {
+        rename { "${it}_${project.base.archivesName.get()}"}
+    }
+}
+afterEvaluate {
+    loom {
+        runs {
+            configureEach {
+                def mixinJarFile = configurations.compileClasspath.files { it.group == "net.fabricmc" && it.name == "sponge-mixin" }.first()
+                vmArg("-javaagent:$mixinJarFile")
+            }
+        }
+    }
+}
