@@ -12,6 +12,8 @@ public class Config {
     public int configVersion; // v0
 
     // v1
+    public boolean online_player; // false by default
+    public String onlinePlayerText; // "Players Online: {online}/{max}" by default
     public String header; // null
     public String footer; // null
 
@@ -37,7 +39,17 @@ public class Config {
             this.save();
             DMSTabs.LOGGER.info("Migrated configuration file to v2");
         }
+
+        // v3 defaults for online player config
+        if (this.configVersion < 3) {
+            this.configVersion = 3;
+            this.online_player = false; // Default is not to show player count
+            this.onlinePlayerText = "Players Online: {online}/{max}"; // Default text format
+            this.save();
+            DMSTabs.LOGGER.info("Migrated configuration file to v3");
+        }
     }
+
 
     public void save() throws IOException {
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
@@ -52,10 +64,9 @@ public class Config {
 
         // FILE DOES NOT EXIST
         if (!config1.exists()) {
-            this.save(); // v0
+            this.save();
         }
 
-        // IF ITS A DIRECTORY FOR SOME REASON? DELETE IT?
         if (config1.isDirectory()) {
             if (config1.delete()) {
                 this.save(); // v0
@@ -78,7 +89,11 @@ public class Config {
             this.refreshTickInterval = readConfig.refreshTickInterval;
             this.enabled = readConfig.enabled;
 
-            setDefaults(); // will check version diffs
+            // v3
+            this.online_player = readConfig.online_player;
+            this.onlinePlayerText = readConfig.onlinePlayerText;
+
+            setDefaults();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
