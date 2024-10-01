@@ -44,7 +44,7 @@ public class Config {
         if (this.configVersion < 3) {
             this.configVersion = 3;
             this.online_player = false; // Default is not to show player count
-            this.onlinePlayerText = "Players Online: {online}/{max}"; // Default text format
+            this.onlinePlayerText = "Players Online: {online}"; // Default text format
             this.save();
             DMSTabs.LOGGER.info("Migrated configuration file to v3");
         }
